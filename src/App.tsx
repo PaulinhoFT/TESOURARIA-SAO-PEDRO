@@ -30,7 +30,7 @@ interface Transaction {
 }
 
 const RESPONSAIVEIS = [
-  'Juan',
+  'Jean',
   'Nayele',
   'Tio Bruno',
   'Ana do Matheus',
