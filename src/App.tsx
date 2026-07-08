@@ -450,14 +450,15 @@ export default function App() {
               <tbody>
                 ${selectedTransactions.map(t => {
                   let dateObj: Date;
-                  if (t.data_transacao.includes('T') || t.data_transacao.includes(' ')) {
-                    dateObj = new Date(t.data_transacao);
+                  const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
+                  if (hasTime) {
+                    const cleanDateStr = t.data_transacao.split('.')[0].replace('Z', '').split('+')[0].replace(' ', 'T');
+                    dateObj = new Date(cleanDateStr);
                   } else {
                     const dateParts = t.data_transacao.split('-');
                     dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
                   }
                   const formattedDate = dateObj.toLocaleDateString('pt-BR');
-                  const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
                   const formattedTime = hasTime ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
                   const displayDateTime = formattedTime ? `${formattedDate} ${formattedTime}` : formattedDate;
                   return `
@@ -912,16 +913,19 @@ export default function App() {
                 </thead>
                 <tbody>
                   {transactionsFiltradas.map((t) => {
-                    // Formatar data e hora localmente de forma segura
+                    // Formatar data e hora de forma segura contra timezone shifts
                     let dateObj: Date;
-                    if (t.data_transacao.includes('T') || t.data_transacao.includes(' ')) {
-                      dateObj = new Date(t.data_transacao);
+                    const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
+                    
+                    if (hasTime) {
+                      const cleanDateStr = t.data_transacao.split('.')[0].replace('Z', '').split('+')[0].replace(' ', 'T');
+                      dateObj = new Date(cleanDateStr);
                     } else {
                       const dateParts = t.data_transacao.split('-');
                       dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
                     }
+                    
                     const formattedDate = dateObj.toLocaleDateString('pt-BR');
-                    const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
                     const formattedTime = hasTime 
                       ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) 
                       : '';
