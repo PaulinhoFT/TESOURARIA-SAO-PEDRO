@@ -1,32 +1,51 @@
-# React + TypeScript + Vite
+# ⛪ Tesouraria São Pedro
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> Sistema de gestão financeira e tesouraria desenvolvido para simplificar e automatizar o controle de entradas, saídas e relatórios da instituição.
 
-Currently, two official plugins are available:
+![Status do Projeto](https://img.shields.io/badge/Status-Em%20Desenvolvimento-green)
+![Licença](https://img.shields.io/badge/License-MIT-blue)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 📖 Sobre o Projeto
 
-## React Compiler
+O projeto **Tesouraria São Pedro** tem como objetivo fornecer uma plataforma intuitiva e segura para o gerenciamento financeiro da comunidade/igreja. Ele permite o registro detalhado de contribuições (dízimos e ofertas), controle de despesas e geração de relatórios para manter a transparência e a organização do fluxo de caixa.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Funcionalidades Principais
 
-## Expanding the Oxlint configuration
+- **Gestão de Entradas:** Cadastro de dízimos, ofertas, doações e outras receitas.
+- **Controle de Saídas:** Registro de despesas, contas a pagar e custos operacionais.
+- **Relatórios Financeiros:** Geração de balanços mensais e anuais (exportação em PDF/Excel).
+- **Cadastro de Membros:** Gerenciamento dos dados dos contribuintes e membros da comunidade.
+- **Dashboard Intuitivo:** Resumo financeiro rápido com gráficos na tela inicial.
+- **Controle de Acesso:** Autenticação de usuários (Administrador, Tesoureiro, Visualizador).
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## 🚀 Tecnologias Utilizadas
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+*(Edite esta seção de acordo com a sua stack real)*
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+**Front-end:**
+- HTML5, CSS3, JavaScript
+- [React](https://reactjs.org/) / [Vue.js](https://vuejs.org/) *(Exemplo)*
+- [Tailwind CSS](https://tailwindcss.com/) / [Bootstrap](https://getbootstrap.com/) *(Exemplo)*
+
+**Back-end e Banco de Dados:**
+- [Node.js](https://nodejs.org/) / [PHP](https://www.php.net/) / [Python](https://www.python.org/) *(Exemplo)*
+- MySQL / PostgreSQL / MongoDB *(Exemplo)*
+
+## 📦 Como executar este projeto localmente
+
+Para clonar e executar este aplicativo, você precisará do [Git](https://git-scm.com) e de ferramentas correspondentes à stack (como Node.js ou um servidor local como XAMPP) instalados no seu computador. 
+
+No seu terminal, digite:
+
+```bash
+# Clone este repositório
+$ git clone [https://github.com/PaulinhoFT/TESOURARIA-SAO-PEDRO.git](https://github.com/PaulinhoFT/TESOURARIA-SAO-PEDRO.git)
+
+# Acesse a pasta do projeto
+$ cd TESOURARIA-SAO-PEDRO
+
+# Instale as dependências
+$ npm install # (ou yarn install / composer install, dependendo do back-end)
+
+# Execute a aplicação
+$ npm start # (ou o comando correspondente)
