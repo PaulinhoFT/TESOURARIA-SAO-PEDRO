@@ -609,6 +609,11 @@ h1, h2, h3, h4, h5, h6 {
   align-items: start;
 }
 
+.main-layout > section {
+  min-width: 0;
+  width: 100%;
+}
+
 @media (min-width: 1024px) {
   .main-layout.admin-mode {
     grid-template-columns: 1fr 2fr;
