@@ -655,29 +655,27 @@ export default function App() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Valor (R$)</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="0,00" 
-                    value={valor}
-                    onChange={(e) => setValor(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Valor (R$)</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="0,00" 
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  required
+                />
+              </div>
 
-                <div className="form-group">
-                  <label className="form-label">Data e Hora</label>
-                  <input 
-                    type="datetime-local" 
-                    className="form-input" 
-                    value={dataTransacao}
-                    onChange={(e) => setDataTransacao(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Data e Hora</label>
+                <input 
+                  type="datetime-local" 
+                  className="form-input" 
+                  value={dataTransacao}
+                  onChange={(e) => setDataTransacao(e.target.value)}
+                  required
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
