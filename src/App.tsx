@@ -46,7 +46,8 @@ const RESPONSAIVEIS = [
   'Pedro',
   'Sthefany',
   'Vagner',
-  'Marcela'
+  'Marcela',
+  'Iasmin'
 ];
 
 export default function App() {
