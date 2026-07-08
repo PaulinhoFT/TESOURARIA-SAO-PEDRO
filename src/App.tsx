@@ -528,14 +528,7 @@ export default function App() {
   return (
     <div className="container">
       {/* Cabeçalho */}
-      <header style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '2rem',
-        paddingBottom: '1rem',
-        borderBottom: '1px solid var(--border-color)'
-      }}>
+      <header className="site-header">
         <div className="header-brand">
           <img src="/logo.png" alt="Logo São Pedro" className="header-logo" />
           <div>
@@ -611,12 +604,7 @@ export default function App() {
       </section>
 
       {/* Seção Principal - Grid de Formulário + Histórico */}
-      <main style={{ 
-        display: 'grid', 
-        gridTemplateColumns: isAdmin ? '1fr 2fr' : '1fr', 
-        gap: '2rem', 
-        alignItems: 'start' 
-      }}>
+      <main className={`main-layout ${isAdmin ? 'admin-mode' : ''}`}>
         
         {/* Painel Administrativo (Formulário) */}
         {isAdmin && (
@@ -797,19 +785,12 @@ export default function App() {
           </div>
 
           {/* Barra de Filtros */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginBottom: '1.5rem' 
-          }}>
+          <div className="filters-header">
             <h3 style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
               {abaAtiva === 'retiradas' ? 'Lançamentos Ativos / Retiradas' : 'Contas Prestadas'}
             </h3>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="filters-controls">
               <ListFilter size={16} style={{ color: 'var(--text-muted)' }} />
               
               <select 

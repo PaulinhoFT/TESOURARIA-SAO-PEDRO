@@ -592,3 +592,148 @@ h1, h2, h3, h4, h5, h6 {
   gap: 0.75rem;
 }
 
+/* Classes de Layout Responsivas */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .main-layout.admin-mode {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filters-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Responsividade Geral */
+@media (max-width: 768px) {
+  .site-header {
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+  }
+  
+  .header-brand {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  
+  .site-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem !important;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .filters-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-header h3 {
+    text-align: center;
+    margin-bottom: 0.25rem;
+  }
+  
+  .filters-controls {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .filters-controls .form-select {
+    flex-grow: 1;
+    font-size: 0.85rem;
+  }
+  
+  /* Melhora a visualização da tabela no celular */
+  .custom-table th, .custom-table td {
+    padding: 0.5rem 0.35rem;
+    font-size: 0.75rem;
+  }
+  
+  .custom-table td.checkbox-cell, .custom-table th.checkbox-cell {
+    width: 30px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .custom-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .badge {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.65rem;
+  }
+  
+  .btn-outline-gold, .btn-danger-outline {
+    padding: 0.25rem;
+  }
+  
+  /* Barra de Ações */
+  .actions-bar {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    align-items: stretch;
+  }
+  
+  .actions-bar-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .actions-bar-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
