@@ -76,9 +76,13 @@ export default function App() {
   const [tipo, setTipo] = useState<'entrada' | 'saida'>('entrada');
   const [categoria, setCategoria] = useState<'doacao' | 'bazar' | 'rifa' | 'despesa' | 'outros'>('doacao');
   const [responsavel, setResponsavel] = useState(RESPONSAIVEIS[0]);
+  const getLocalISODateTime = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
+  };
   const [dataTransacao, setDataTransacao] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    return getLocalISODateTime();
   });
   const [comprovante, setComprovante] = useState<File | null>(null);
   
@@ -150,7 +154,16 @@ export default function App() {
     setTipo(t.tipo);
     setCategoria(t.categoria);
     setResponsavel(t.responsavel || RESPONSAIVEIS[0]);
-    setDataTransacao(t.data_transacao);
+    
+    // Formata a data para datetime-local (YYYY-MM-DDTHH:MM)
+    if (t.data_transacao.includes('T')) {
+      setDataTransacao(t.data_transacao.slice(0, 16));
+    } else if (t.data_transacao.includes(' ')) {
+      setDataTransacao(t.data_transacao.replace(' ', 'T').slice(0, 16));
+    } else {
+      setDataTransacao(`${t.data_transacao}T00:00`);
+    }
+    
     setComprovante(null); // Reseta novo comprovante
     
     // Rola a tela até o formulário no celular
@@ -165,8 +178,7 @@ export default function App() {
     setTipo('entrada');
     setCategoria('doacao');
     setResponsavel(RESPONSAIVEIS[0]);
-    const today = new Date();
-    setDataTransacao(today.toISOString().split('T')[0]);
+    setDataTransacao(getLocalISODateTime());
     setComprovante(null);
   };
 
@@ -264,8 +276,7 @@ export default function App() {
       setValor('');
       setComprovante(null);
       setResponsavel(RESPONSAIVEIS[0]);
-      const today = new Date();
-      setDataTransacao(today.toISOString().split('T')[0]);
+      setDataTransacao(getLocalISODateTime());
       
       // Atualizar lista
       await fetchTransactions();
@@ -438,12 +449,20 @@ export default function App() {
               </thead>
               <tbody>
                 ${selectedTransactions.map(t => {
-                  const dateParts = t.data_transacao.split('-');
-                  const dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                  let dateObj: Date;
+                  if (t.data_transacao.includes('T') || t.data_transacao.includes(' ')) {
+                    dateObj = new Date(t.data_transacao);
+                  } else {
+                    const dateParts = t.data_transacao.split('-');
+                    dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                  }
                   const formattedDate = dateObj.toLocaleDateString('pt-BR');
+                  const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
+                  const formattedTime = hasTime ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+                  const displayDateTime = formattedTime ? `${formattedDate} ${formattedTime}` : formattedDate;
                   return `
                     <tr>
-                      <td>${formattedDate}</td>
+                      <td>${displayDateTime}</td>
                       <td style="font-weight: 500;">${t.descricao}</td>
                       <td>${t.responsavel || 'Não informado'}</td>
                       <td>${translateCategory(t.categoria)}</td>
@@ -649,9 +668,9 @@ export default function App() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Data</label>
+                  <label className="form-label">Data e Hora</label>
                   <input 
-                    type="date" 
+                    type="datetime-local" 
                     className="form-input" 
                     value={dataTransacao}
                     onChange={(e) => setDataTransacao(e.target.value)}
@@ -893,10 +912,20 @@ export default function App() {
                 </thead>
                 <tbody>
                   {transactionsFiltradas.map((t) => {
-                    // Formatar data localmente
-                    const dateParts = t.data_transacao.split('-');
-                    const dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                    // Formatar data e hora localmente de forma segura
+                    let dateObj: Date;
+                    if (t.data_transacao.includes('T') || t.data_transacao.includes(' ')) {
+                      dateObj = new Date(t.data_transacao);
+                    } else {
+                      const dateParts = t.data_transacao.split('-');
+                      dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                    }
                     const formattedDate = dateObj.toLocaleDateString('pt-BR');
+                    const hasTime = t.data_transacao.includes('T') || t.data_transacao.includes(' ');
+                    const formattedTime = hasTime 
+                      ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) 
+                      : '';
+                    const displayDateTimeDesktop = formattedTime ? `${formattedDate} ${formattedTime}` : formattedDate;
 
                     return (
                       <tr key={t.id}>
@@ -909,8 +938,8 @@ export default function App() {
                           />
                         </td>
                         <td style={{ whiteSpace: 'nowrap' }}>
-                          <span className="desktop-date">{formattedDate}</span>
-                          <span className="mobile-date">{`${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`}</span>
+                          <span className="desktop-date">{displayDateTimeDesktop}</span>
+                          <span className="mobile-date">{formattedTime ? `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')} ${formattedTime}` : `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`}</span>
                         </td>
                         <td style={{ fontWeight: 500 }}>{t.descricao}</td>
                         <td className="col-responsavel">{t.responsavel || 'Não informado'}</td>
