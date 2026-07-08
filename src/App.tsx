@@ -883,9 +883,9 @@ export default function App() {
                     </th>
                     <th>Data</th>
                     <th>Descrição</th>
-                    <th>Quem Enviou</th>
-                    <th>Categoria</th>
-                    <th>Tipo</th>
+                    <th className="col-responsavel">Quem Enviou</th>
+                    <th className="col-categoria">Categoria</th>
+                    <th className="col-tipo">Tipo</th>
                     <th style={{ textAlign: 'right' }}>Valor</th>
                     <th style={{ textAlign: 'center' }}>Comp.</th>
                     {isAdmin && <th style={{ textAlign: 'center' }}>Ações</th>}
@@ -908,15 +908,18 @@ export default function App() {
                             onChange={() => handleToggleSelect(t.id)}
                           />
                         </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{formattedDate}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <span className="desktop-date">{formattedDate}</span>
+                          <span className="mobile-date">{`${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`}</span>
+                        </td>
                         <td style={{ fontWeight: 500 }}>{t.descricao}</td>
-                        <td>{t.responsavel || 'Não informado'}</td>
-                        <td>
+                        <td className="col-responsavel">{t.responsavel || 'Não informado'}</td>
+                        <td className="col-categoria">
                           <span className="badge badge-cat">
                             {translateCategory(t.categoria)}
                           </span>
                         </td>
-                        <td>
+                        <td className="col-tipo">
                           <span className={`badge badge-${t.tipo}`}>
                             {t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                           </span>
@@ -924,7 +927,8 @@ export default function App() {
                         <td style={{ 
                           textAlign: 'right', 
                           fontWeight: 600,
-                          color: t.tipo === 'entrada' ? 'var(--color-success)' : 'var(--color-danger)'
+                          color: t.tipo === 'entrada' ? 'var(--color-success)' : 'var(--color-danger)',
+                          whiteSpace: 'nowrap'
                         }}>
                           {t.tipo === 'entrada' ? '+' : '-'} {formatMoney(t.valor)}
                         </td>
