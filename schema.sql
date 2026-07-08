@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.transacoes (
 ALTER TABLE public.transacoes ENABLE ROW LEVEL SECURITY;
 
 -- 3. Criar políticas de acesso para permitir operações via cliente frontend (Chave Anon)
--- Como o controle de admin é feito na interface, permitimos leitura, inserção e exclusão pública.
+-- Como o controle de admin é feito na interface, permitimos leitura, inserção, atualização e exclusão pública.
 
 DROP POLICY IF EXISTS "Permitir leitura pública" ON public.transacoes;
 CREATE POLICY "Permitir leitura pública" ON public.transacoes
@@ -30,6 +30,10 @@ CREATE POLICY "Permitir leitura pública" ON public.transacoes
 DROP POLICY IF EXISTS "Permitir inserção pública" ON public.transacoes;
 CREATE POLICY "Permitir inserção pública" ON public.transacoes
     FOR INSERT TO anon, authenticated WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir atualização pública" ON public.transacoes;
+CREATE POLICY "Permitir atualização pública" ON public.transacoes
+    FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Permitir exclusão pública" ON public.transacoes;
 CREATE POLICY "Permitir exclusão pública" ON public.transacoes
