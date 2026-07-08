@@ -688,6 +688,10 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   /* Melhora a visualização da tabela no celular */
+  .custom-table {
+    min-width: 850px;
+  }
+  
   .custom-table th, .custom-table td {
     padding: 0.5rem 0.35rem;
     font-size: 0.75rem;
