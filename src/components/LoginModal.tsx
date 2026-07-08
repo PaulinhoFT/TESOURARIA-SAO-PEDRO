@@ -35,7 +35,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
       setPassword('');
       onClose();
     } else {
-      setError('Credenciais inválidas. Tente admin / admin.');
+      setError('Credenciais inválidas. Entre em contato com o Paulinho.');
     }
   };
 
