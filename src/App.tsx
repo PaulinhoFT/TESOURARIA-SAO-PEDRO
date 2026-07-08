@@ -63,7 +63,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   // Controle de Aba
-  const [abaAtiva, setAbaAtiva] = useState<'retiradas' | 'prestadas'>('retiradas');
+  const [abaAtiva, setAbaAtiva] = useState<'entradas' | 'retiradas' | 'prestadas'>('entradas');
 
   // Seleção múltipla para ações em lote
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -518,7 +518,14 @@ export default function App() {
   // Filtragem local
   const transactionsFiltradas = transactions.filter(t => {
     // Separa de acordo com a aba selecionada
-    const atendeAba = abaAtiva === 'retiradas' ? !t.conta_prestada : t.conta_prestada;
+    let atendeAba = false;
+    if (abaAtiva === 'entradas') {
+      atendeAba = !t.conta_prestada && t.tipo === 'entrada';
+    } else if (abaAtiva === 'retiradas') {
+      atendeAba = !t.conta_prestada && t.tipo === 'saida';
+    } else {
+      atendeAba = t.conta_prestada;
+    }
     
     const atendeTipo = filtroTipo === 'todos' || t.tipo === filtroTipo;
     const atendeCategoria = filtroCategoria === 'todas' || t.categoria === filtroCategoria;
@@ -790,10 +797,16 @@ export default function App() {
           {/* Abas */}
           <div className="tabs-container">
             <button 
+              className={`tab-btn ${abaAtiva === 'entradas' ? 'active' : ''}`}
+              onClick={() => setAbaAtiva('entradas')}
+            >
+              Entradas
+            </button>
+            <button 
               className={`tab-btn ${abaAtiva === 'retiradas' ? 'active' : ''}`}
               onClick={() => setAbaAtiva('retiradas')}
             >
-              Retiradas / Lançamentos
+              Retiradas
             </button>
             <button 
               className={`tab-btn ${abaAtiva === 'prestadas' ? 'active' : ''}`}
@@ -806,7 +819,7 @@ export default function App() {
           {/* Barra de Filtros */}
           <div className="filters-header">
             <h3 style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
-              {abaAtiva === 'retiradas' ? 'Lançamentos Ativos / Retiradas' : 'Contas Prestadas'}
+              {abaAtiva === 'entradas' ? 'Entradas Ativas' : abaAtiva === 'retiradas' ? 'Retiradas Ativas' : 'Contas Prestadas'}
             </h3>
 
             <div className="filters-controls">
@@ -862,7 +875,7 @@ export default function App() {
                   <FileText size={16} />
                   <span>Gerar PDF (Planilha)</span>
                 </button>
-                {isAdmin && abaAtiva === 'retiradas' && (
+                {isAdmin && abaAtiva !== 'prestadas' && (
                   <button onClick={handlePrestarContas} className="btn btn-gold" style={{ padding: '0.5rem 1rem' }}>
                     <FileCheck size={16} />
                     <span>Prestar Contas</span>
