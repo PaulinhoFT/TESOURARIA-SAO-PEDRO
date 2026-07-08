@@ -370,6 +370,7 @@ export default function App() {
                   <th>Quem Enviou</th>
                   <th>Categoria</th>
                   <th>Tipo</th>
+                  <th>Comprovante</th>
                   <th class="text-right">Valor</th>
                 </tr>
               </thead>
@@ -389,6 +390,9 @@ export default function App() {
                           ${t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                         </span>
                       </td>
+                      <td>
+                        ${t.comprovante_url ? `<a href="${t.comprovante_url}" target="_blank" style="color: #2e5a27; font-weight: bold; text-decoration: underline;">Ver Comprovante</a>` : '-'}
+                      </td>
                       <td class="text-right" style="font-weight: 600; color: ${t.tipo === 'entrada' ? '#2e7d32' : '#c62828'};">
                         ${t.tipo === 'entrada' ? '+' : '-'} ${formatMoney(t.valor)}
                       </td>
@@ -396,7 +400,7 @@ export default function App() {
                   `;
                 }).join('')}
                 <tr class="total-row">
-                  <td colspan="5" class="text-right">Saldo Final do Grupo Selecionado:</td>
+                  <td colspan="6" class="text-right">Saldo Final do Grupo Selecionado:</td>
                   <td class="text-right" style="color: ${saldoSel >= 0 ? '#1b5e20' : '#b71c1c'};">${formatMoney(saldoSel)}</td>
                 </tr>
               </tbody>
