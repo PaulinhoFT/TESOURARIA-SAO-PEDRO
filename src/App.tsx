@@ -14,7 +14,8 @@ import {
   Calendar, 
   ListFilter,
   Loader2,
-  FileCheck
+  FileCheck,
+  Pencil
 } from 'lucide-react';
 
 interface Transaction {
@@ -65,6 +66,9 @@ export default function App() {
 
   // Seleção múltipla para ações em lote
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Estado para Edição
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // Estados do Formulário (Admin)
   const [descricao, setDescricao] = useState('');
@@ -135,6 +139,35 @@ export default function App() {
   const handleLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('sao_pedro_isAdmin');
+    setEditingTransaction(null); // Limpa modo edição ao deslogar
+  };
+
+  // Iniciar modo de edição
+  const handleStartEdit = (t: Transaction) => {
+    setEditingTransaction(t);
+    setDescricao(t.descricao);
+    setValor(t.valor.toString().replace('.', ','));
+    setTipo(t.tipo);
+    setCategoria(t.categoria);
+    setResponsavel(t.responsavel || RESPONSAIVEIS[0]);
+    setDataTransacao(t.data_transacao);
+    setComprovante(null); // Reseta novo comprovante
+    
+    // Rola a tela até o formulário no celular
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Cancelar modo de edição
+  const handleCancelEdit = () => {
+    setEditingTransaction(null);
+    setDescricao('');
+    setValor('');
+    setTipo('entrada');
+    setCategoria('doacao');
+    setResponsavel(RESPONSAIVEIS[0]);
+    const today = new Date();
+    setDataTransacao(today.toISOString().split('T')[0]);
+    setComprovante(null);
   };
 
   // Upload do Comprovante para o Supabase Storage
@@ -168,14 +201,16 @@ export default function App() {
     }
   };
 
-  // Submeter Formulário
+  // Submeter Formulário (Inserção ou Edição)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!descricao.trim() || !valor) return;
 
     setSaving(true);
     try {
-      let comprovanteUrl: string | null = null;
+      let comprovanteUrl: string | null = editingTransaction ? editingTransaction.comprovante_url : null;
+      
+      // Se selecionou um novo comprovante, faz o upload
       if (comprovante) {
         comprovanteUrl = await uploadFile(comprovante);
       }
@@ -187,28 +222,50 @@ export default function App() {
         return;
       }
 
-      const { error: insertErr } = await supabase
-        .from('transacoes')
-        .insert([
-          {
+      if (editingTransaction) {
+        // Modo Edição (UPDATE)
+        const { error: updateErr } = await supabase
+          .from('transacoes')
+          .update({
             descricao: descricao.trim(),
             valor: parsedValue,
             tipo,
             categoria,
             responsavel,
             data_transacao: dataTransacao,
-            comprovante_url: comprovanteUrl,
-            conta_prestada: false
-          }
-        ]);
+            comprovante_url: comprovanteUrl
+          })
+          .eq('id', editingTransaction.id);
 
-      if (insertErr) throw insertErr;
+        if (updateErr) throw updateErr;
+        setEditingTransaction(null);
+      } else {
+        // Modo Inserção (INSERT)
+        const { error: insertErr } = await supabase
+          .from('transacoes')
+          .insert([
+            {
+              descricao: descricao.trim(),
+              valor: parsedValue,
+              tipo,
+              categoria,
+              responsavel,
+              data_transacao: dataTransacao,
+              comprovante_url: comprovanteUrl,
+              conta_prestada: false
+            }
+          ]);
+
+        if (insertErr) throw insertErr;
+      }
 
       // Resetar formulário
       setDescricao('');
       setValor('');
       setComprovante(null);
       setResponsavel(RESPONSAIVEIS[0]);
+      const today = new Date();
+      setDataTransacao(today.toISOString().split('T')[0]);
       
       // Atualizar lista
       await fetchTransactions();
@@ -239,6 +296,11 @@ export default function App() {
         next.delete(id);
         return next;
       });
+      
+      // Se estava editando o item excluído, sai do modo de edição
+      if (editingTransaction?.id === id) {
+        handleCancelEdit();
+      }
     } catch (err: any) {
       console.error('Erro ao deletar transação:', err);
       alert('Erro ao deletar lançamento do banco de dados.');
@@ -289,7 +351,7 @@ export default function App() {
       await fetchTransactions();
     } catch (err: any) {
       console.error('Erro ao prestar contas:', err);
-      alert('Erro ao realizar a prestação de contas no banco de dados.');
+      alert('Erro ao realizar a prestação de contas no banco de dados. Certifique-se de que rodou o SQL de UPDATE de RLS no painel.');
     } finally {
       setLoading(false);
     }
@@ -568,8 +630,8 @@ export default function App() {
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <PlusCircle size={20} />
-              Novo Lançamento
+              {editingTransaction ? <Pencil size={20} /> : <PlusCircle size={20} />}
+              {editingTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}
             </h2>
 
             <form onSubmit={handleSubmit}>
@@ -661,7 +723,9 @@ export default function App() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-                <label className="form-label">Comprovante (Imagem ou PDF)</label>
+                <label className="form-label">
+                  {editingTransaction ? 'Substituir Comprovante (opcional)' : 'Comprovante (Imagem ou PDF)'}
+                </label>
                 <div className="file-upload-wrapper">
                   <input 
                     type="file" 
@@ -676,21 +740,34 @@ export default function App() {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
-                className="btn btn-gold" 
-                style={{ width: '100%', padding: '0.75rem' }}
-                disabled={saving}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="animate-spin" size={18} />
-                    <span>Salvando lançamento...</span>
-                  </>
-                ) : (
-                  <span>Registrar Lançamento</span>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn btn-gold" 
+                  style={{ flexGrow: 1, padding: '0.75rem' }}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <span>{editingTransaction ? 'Salvar Alterações' : 'Registrar Lançamento'}</span>
+                  )}
+                </button>
+                
+                {editingTransaction && (
+                  <button 
+                    type="button" 
+                    onClick={handleCancelEdit} 
+                    className="btn btn-secondary"
+                    style={{ padding: '0.75rem' }}
+                  >
+                    Cancelar
+                  </button>
                 )}
-              </button>
+              </div>
               
               {uploadProgress && (
                 <p style={{ color: 'var(--accent-gold)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.5rem' }}>
@@ -887,7 +964,15 @@ export default function App() {
                           )}
                         </td>
                         {isAdmin && (
-                          <td style={{ textAlign: 'center' }}>
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <button 
+                              onClick={() => handleStartEdit(t)} 
+                              className="btn btn-outline-gold"
+                              style={{ padding: '0.35rem', borderRadius: '6px', marginRight: '0.5rem' }}
+                              title="Editar Lançamento"
+                            >
+                              <Pencil size={16} />
+                            </button>
                             <button 
                               onClick={() => handleDelete(t.id)} 
                               className="btn btn-danger-outline"
