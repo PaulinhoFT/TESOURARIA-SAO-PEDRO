@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.transacoes (
     categoria TEXT NOT NULL CHECK (categoria IN ('doacao', 'bazar', 'rifa', 'despesa', 'outros')),
     responsavel TEXT, -- Nome do responsável (Quem enviou)
     comprovante_url TEXT,
+    conta_prestada BOOLEAN DEFAULT false, -- Novo campo para controle de prestação de contas
     data_transacao DATE NOT NULL DEFAULT CURRENT_DATE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

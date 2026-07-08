@@ -24,3 +24,6 @@ Chaves banco de dados.txt
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify

@@ -25,6 +25,7 @@ interface Transaction {
   categoria: 'doacao' | 'bazar' | 'rifa' | 'despesa' | 'outros';
   responsavel: string | null;
   comprovante_url: string | null;
+  conta_prestada: boolean;
   data_transacao: string;
   criado_em: string;
 }
@@ -59,6 +60,12 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Controle de Aba
+  const [abaAtiva, setAbaAtiva] = useState<'retiradas' | 'prestadas'>('retiradas');
+
+  // Seleção múltipla para ações em lote
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   // Estados do Formulário (Admin)
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
@@ -88,6 +95,11 @@ export default function App() {
       setCategoria('despesa');
     }
   }, [tipo]);
+
+  // Limpa a seleção ao mudar de aba
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [abaAtiva]);
 
   // Buscar transações no Supabase
   const fetchTransactions = async () => {
@@ -185,7 +197,8 @@ export default function App() {
             categoria,
             responsavel,
             data_transacao: dataTransacao,
-            comprovante_url: comprovanteUrl
+            comprovante_url: comprovanteUrl,
+            conta_prestada: false
           }
         ]);
 
@@ -221,9 +234,182 @@ export default function App() {
 
       // Atualizar localmente
       setTransactions(prev => prev.filter(t => t.id !== id));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } catch (err: any) {
       console.error('Erro ao deletar transação:', err);
       alert('Erro ao deletar lançamento do banco de dados.');
+    }
+  };
+
+  // Seleção de itens
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = (filteredList: Transaction[]) => {
+    const allSelected = filteredList.length > 0 && filteredList.every(t => selectedIds.has(t.id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allSelected) {
+        filteredList.forEach(t => next.delete(t.id));
+      } else {
+        filteredList.forEach(t => next.add(t.id));
+      }
+      return next;
+    });
+  };
+
+  // Ação em Lote: Prestar Contas
+  const handlePrestarContas = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Deseja prestar contas dos ${selectedIds.size} lançamentos selecionados?`)) return;
+
+    setLoading(true);
+    try {
+      const { error: updateErr } = await supabase
+        .from('transacoes')
+        .update({ conta_prestada: true })
+        .in('id', Array.from(selectedIds));
+
+      if (updateErr) throw updateErr;
+
+      setSelectedIds(new Set());
+      await fetchTransactions();
+    } catch (err: any) {
+      console.error('Erro ao prestar contas:', err);
+      alert('Erro ao realizar a prestação de contas no banco de dados.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ação em Lote: Gerar PDF/Planilha
+  const handleGerarPDF = () => {
+    if (selectedIds.size === 0) return;
+    const selectedTransactions = transactions.filter(t => selectedIds.has(t.id));
+    
+    // Calcula totais do relatório
+    const totalEntradasSel = selectedTransactions
+      .filter(t => t.tipo === 'entrada')
+      .reduce((sum, t) => sum + t.valor, 0);
+
+    const totalSaidasSel = selectedTransactions
+      .filter(t => t.tipo === 'saida')
+      .reduce((sum, t) => sum + t.valor, 0);
+
+    const saldoSel = totalEntradasSel - totalSaidasSel;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Relatório Financeiro São Pedro</title>
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #333; background: #fff; }
+              .header { text-align: center; border-bottom: 2px solid #2e5a27; padding-bottom: 15px; margin-bottom: 20px; }
+              .header h1 { margin: 0; font-size: 24px; color: #2e5a27; }
+              .header p { margin: 5px 0 0 0; font-size: 14px; color: #666; }
+              
+              .summary-box { display: flex; justify-content: space-between; margin-bottom: 25px; gap: 15px; }
+              .summary-card { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background-color: #fcfcfc; text-align: center; }
+              .summary-label { font-size: 11px; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 5px; }
+              .summary-value { font-size: 16px; font-weight: bold; }
+              
+              table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+              th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+              th { background-color: #2e5a27; color: #fff; font-weight: bold; text-transform: uppercase; font-size: 11px; }
+              tr:nth-child(even) { background-color: #f9f9f9; }
+              .text-right { text-align: right; }
+              .total-row { font-weight: bold; background-color: #f0f0f0 !important; }
+              
+              .badge { font-weight: bold; text-transform: uppercase; font-size: 9px; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+              .badge-entrada { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+              .badge-saida { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Relatório de Movimentação - São Pedro</h1>
+              <p>Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+            </div>
+
+            <div class="summary-box">
+              <div class="summary-card">
+                <div class="summary-label">Total Entradas</div>
+                <div class="summary-value" style="color: #2e7d32;">${formatMoney(totalEntradasSel)}</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-label">Total Saídas</div>
+                <div class="summary-value" style="color: #c62828;">${formatMoney(totalSaidasSel)}</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-label">Saldo Relatório</div>
+                <div class="summary-value" style="color: ${saldoSel >= 0 ? '#1b5e20' : '#b71c1c'};">${formatMoney(saldoSel)}</div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Quem Enviou</th>
+                  <th>Categoria</th>
+                  <th>Tipo</th>
+                  <th class="text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${selectedTransactions.map(t => {
+                  const dateParts = t.data_transacao.split('-');
+                  const dateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                  const formattedDate = dateObj.toLocaleDateString('pt-BR');
+                  return `
+                    <tr>
+                      <td>${formattedDate}</td>
+                      <td style="font-weight: 500;">${t.descricao}</td>
+                      <td>${t.responsavel || 'Não informado'}</td>
+                      <td>${translateCategory(t.categoria)}</td>
+                      <td>
+                        <span class="badge ${t.tipo === 'entrada' ? 'badge-entrada' : 'badge-saida'}">
+                          ${t.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                        </span>
+                      </td>
+                      <td class="text-right" style="font-weight: 600; color: ${t.tipo === 'entrada' ? '#2e7d32' : '#c62828'};">
+                        ${t.tipo === 'entrada' ? '+' : '-'} ${formatMoney(t.valor)}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+                <tr class="total-row">
+                  <td colspan="5" class="text-right">Saldo Final do Grupo Selecionado:</td>
+                  <td class="text-right" style="color: ${saldoSel >= 0 ? '#1b5e20' : '#b71c1c'};">${formatMoney(saldoSel)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
   };
 
@@ -238,12 +424,20 @@ export default function App() {
 
   const saldoAtual = totalEntradas - totalSaidas;
 
+  const totalContasPrestadas = transactions
+    .filter(t => t.conta_prestada)
+    .reduce((sum, t) => sum + t.valor, 0);
+
   // Filtragem local
   const transactionsFiltradas = transactions.filter(t => {
+    // Separa de acordo com a aba selecionada
+    const atendeAba = abaAtiva === 'retiradas' ? !t.conta_prestada : t.conta_prestada;
+    
     const atendeTipo = filtroTipo === 'todos' || t.tipo === filtroTipo;
     const atendeCategoria = filtroCategoria === 'todas' || t.categoria === filtroCategoria;
     const atendeResponsavel = filtroResponsavel === 'todos' || t.responsavel === filtroResponsavel;
-    return atendeTipo && atendeCategoria && atendeResponsavel;
+    
+    return atendeAba && atendeTipo && atendeCategoria && atendeResponsavel;
   });
 
   // Formatação de Dinheiro em BRL
@@ -294,46 +488,58 @@ export default function App() {
         ) : (
           <button onClick={() => setIsLoginOpen(true)} className="btn btn-outline-gold">
             <LogIn size={16} />
-            <span>Entrar como Admin</span>
+            <span>Logar</span>
           </button>
         )}
       </header>
 
       {/* Cartões de Estatísticas */}
-      <section className="stats-grid">
+      <section className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         <div className="glass-card stat-card entrada">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Total de Entradas</span>
-              <TrendingUp size={20} style={{ color: 'var(--color-success)' }} />
+            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+              <span>Total Entradas</span>
+              <TrendingUp size={18} style={{ color: 'var(--color-success)' }} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: 'var(--color-success)' }}>
+          <div className="stat-value" style={{ color: 'var(--color-success)', fontSize: '1.6rem' }}>
             {formatMoney(totalEntradas)}
           </div>
         </div>
 
         <div className="glass-card stat-card saida">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Total de Saídas</span>
-              <TrendingDown size={20} style={{ color: 'var(--color-danger)' }} />
+            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+              <span>Total Saídas</span>
+              <TrendingDown size={18} style={{ color: 'var(--color-danger)' }} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: 'var(--color-danger)' }}>
+          <div className="stat-value" style={{ color: 'var(--color-danger)', fontSize: '1.6rem' }}>
             {formatMoney(totalSaidas)}
           </div>
         </div>
 
         <div className="glass-card stat-card saldo">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
               <span>Saldo Atual</span>
-              <DollarSign size={20} style={{ color: 'var(--accent-gold)' }} />
+              <DollarSign size={18} style={{ color: 'var(--accent-gold)' }} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: saldoAtual >= 0 ? 'var(--text-primary)' : 'var(--color-danger)' }}>
+          <div className="stat-value" style={{ color: saldoAtual >= 0 ? 'var(--text-primary)' : 'var(--color-danger)', fontSize: '1.6rem' }}>
             {formatMoney(saldoAtual)}
+          </div>
+        </div>
+
+        <div className="glass-card stat-card prestadas">
+          <div className="stat-label">
+            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+              <span>Contas Prestadas</span>
+              <FileCheck size={18} style={{ color: 'var(--accent-gold)' }} />
+            </div>
+          </div>
+          <div className="stat-value" style={{ color: 'var(--accent-gold)', fontSize: '1.6rem' }}>
+            {formatMoney(totalContasPrestadas)}
           </div>
         </div>
       </section>
@@ -493,6 +699,23 @@ export default function App() {
 
         {/* Histórico de Lançamentos */}
         <section className="glass-card" style={{ flexGrow: 1 }}>
+          {/* Abas */}
+          <div className="tabs-container">
+            <button 
+              className={`tab-btn ${abaAtiva === 'retiradas' ? 'active' : ''}`}
+              onClick={() => setAbaAtiva('retiradas')}
+            >
+              Retiradas / Lançamentos
+            </button>
+            <button 
+              className={`tab-btn ${abaAtiva === 'prestadas' ? 'active' : ''}`}
+              onClick={() => setAbaAtiva('prestadas')}
+            >
+              Contas Prestadas
+            </button>
+          </div>
+
+          {/* Barra de Filtros */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -501,11 +724,10 @@ export default function App() {
             gap: '1rem',
             marginBottom: '1.5rem' 
           }}>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--text-primary)' }}>
-              Histórico de Lançamentos
-            </h2>
+            <h3 style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              {abaAtiva === 'retiradas' ? 'Lançamentos Ativos / Retiradas' : 'Contas Prestadas'}
+            </h3>
 
-            {/* Filtros */}
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <ListFilter size={16} style={{ color: 'var(--text-muted)' }} />
               
@@ -548,6 +770,27 @@ export default function App() {
             </div>
           </div>
 
+          {/* Barra de Ações em Lote */}
+          {selectedIds.size > 0 && (
+            <div className="actions-bar">
+              <span className="actions-bar-info">
+                {selectedIds.size} lançamento{selectedIds.size > 1 ? 's' : ''} selecionado{selectedIds.size > 1 ? 's' : ''}
+              </span>
+              <div className="actions-bar-buttons">
+                <button onClick={handleGerarPDF} className="btn btn-outline-gold" style={{ padding: '0.5rem 1rem' }}>
+                  <FileText size={16} />
+                  <span>Gerar PDF (Planilha)</span>
+                </button>
+                {isAdmin && abaAtiva === 'retiradas' && (
+                  <button onClick={handlePrestarContas} className="btn btn-gold" style={{ padding: '0.5rem 1rem' }}>
+                    <FileCheck size={16} />
+                    <span>Prestar Contas</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '3rem 0' }}>
               <Loader2 className="animate-spin" size={32} style={{ color: 'var(--accent-gold)' }} />
@@ -568,6 +811,14 @@ export default function App() {
               <table className="custom-table">
                 <thead>
                   <tr>
+                    <th className="checkbox-cell">
+                      <input 
+                        type="checkbox" 
+                        className="custom-checkbox" 
+                        checked={transactionsFiltradas.length > 0 && transactionsFiltradas.every(t => selectedIds.has(t.id))}
+                        onChange={() => handleSelectAll(transactionsFiltradas)}
+                      />
+                    </th>
                     <th>Data</th>
                     <th>Descrição</th>
                     <th>Quem Enviou</th>
@@ -587,6 +838,14 @@ export default function App() {
 
                     return (
                       <tr key={t.id}>
+                        <td className="checkbox-cell">
+                          <input 
+                            type="checkbox" 
+                            className="custom-checkbox" 
+                            checked={selectedIds.has(t.id)}
+                            onChange={() => handleToggleSelect(t.id)}
+                          />
+                        </td>
                         <td style={{ whiteSpace: 'nowrap' }}>{formattedDate}</td>
                         <td style={{ fontWeight: 500 }}>{t.descricao}</td>
                         <td>{t.responsavel || 'Não informado'}</td>
