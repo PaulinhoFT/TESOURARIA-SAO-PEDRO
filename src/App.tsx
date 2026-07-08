@@ -497,7 +497,7 @@ export default function App() {
       <section className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         <div className="glass-card stat-card entrada">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Total Entradas</span>
               <TrendingUp size={18} style={{ color: 'var(--color-success)' }} />
             </div>
@@ -509,7 +509,7 @@ export default function App() {
 
         <div className="glass-card stat-card saida">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Total Saídas</span>
               <TrendingDown size={18} style={{ color: 'var(--color-danger)' }} />
             </div>
@@ -521,7 +521,7 @@ export default function App() {
 
         <div className="glass-card stat-card saldo">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Saldo Atual</span>
               <DollarSign size={18} style={{ color: 'var(--accent-gold)' }} />
             </div>
@@ -533,7 +533,7 @@ export default function App() {
 
         <div className="glass-card stat-card prestadas">
           <div className="stat-label">
-            <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Contas Prestadas</span>
               <FileCheck size={18} style={{ color: 'var(--accent-gold)' }} />
             </div>
