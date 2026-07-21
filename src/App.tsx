@@ -193,7 +193,10 @@ export default function App() {
 
       const { error: uploadErr } = await supabase.storage
         .from('comprovantes')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true
+        });
 
       if (uploadErr) {
         throw uploadErr;
