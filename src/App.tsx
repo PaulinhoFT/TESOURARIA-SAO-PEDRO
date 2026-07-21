@@ -747,7 +747,7 @@ export default function App() {
                   <input 
                     type="file" 
                     className="file-upload-input" 
-                    accept="image/*,application/pdf"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
                     onChange={(e) => setComprovante(e.target.files?.[0] || null)}
                   />
                   <div className="file-upload-button">
